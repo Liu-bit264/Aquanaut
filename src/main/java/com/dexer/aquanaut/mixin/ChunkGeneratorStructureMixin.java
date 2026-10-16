@@ -1,15 +1,13 @@
 package com.dexer.aquanaut.mixin;
 
 import com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask;
-import net.minecraft.core.Holder;
+import com.dexer.aquanaut.core.WorldPresetRegistry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
@@ -34,9 +32,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorStructureMixin {
-    private static final ResourceLocation WATER_WORLD_SETTINGS =
-            ResourceLocation.fromNamespaceAndPath("aquanaut", "water_world");
-
     @Inject(method = "tryGenerateStructure", at = @At("HEAD"), cancellable = true, remap = false)
     private void aquanaut$keepStructuresOffTheIsland(
             StructureSet.StructureSelectionEntry structureSelectionEntry,
@@ -61,10 +56,7 @@ public abstract class ChunkGeneratorStructureMixin {
         if (!(generator instanceof NoiseBasedChunkGenerator noiseGenerator)) {
             return false;
         }
-        Holder<NoiseGeneratorSettings> settings =
-                ((NoiseBasedChunkGeneratorAccessor) noiseGenerator).aquanaut$getSettings();
-        return settings.unwrapKey()
-                .map(key -> key.location().equals(WATER_WORLD_SETTINGS))
-                .orElse(false);
+        return WorldPresetRegistry.isWaterWorld(
+                ((NoiseBasedChunkGeneratorAccessor) noiseGenerator).aquanaut$getSettings());
     }
 }

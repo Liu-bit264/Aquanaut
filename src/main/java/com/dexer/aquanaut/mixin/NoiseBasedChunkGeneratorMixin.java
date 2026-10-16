@@ -11,6 +11,7 @@ import com.dexer.aquanaut.common.worldgen.layers.OceanGenSampler;
 import com.dexer.aquanaut.common.worldgen.layers.OceanLayerStack;
 import com.dexer.aquanaut.common.worldgen.layers.OceanLayerStacks;
 import com.dexer.aquanaut.common.worldgen.layers.TerrainModule;
+import com.dexer.aquanaut.core.WorldPresetRegistry;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -51,8 +52,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(NoiseBasedChunkGenerator.class)
 public abstract class NoiseBasedChunkGeneratorMixin {
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
-    private static final ResourceLocation WATER_WORLD_SETTINGS =
-            ResourceLocation.fromNamespaceAndPath("aquanaut", "water_world");
 
     @Shadow
     @Final
@@ -64,9 +63,7 @@ public abstract class NoiseBasedChunkGeneratorMixin {
 
     /** Whether this generator runs the water world preset, whose terrain plans the spawn island. */
     private boolean aquanaut$isWaterWorld() {
-        return this.settings.unwrapKey()
-                .map(key -> key.location().equals(WATER_WORLD_SETTINGS))
-                .orElse(false);
+        return WorldPresetRegistry.isWaterWorld(this.settings);
     }
 
     /**

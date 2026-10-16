@@ -70,6 +70,18 @@ class IslandBiomeResourcesTest {
                 "island beach lost its turtles");
     }
 
+    @Test
+    void islandBeachCarriesTheSeaLifeOfItsSubmergedFlank() {
+        // Unlike its three siblings, island_beach is mostly under water: the mod's sand
+        // apron runs some 170 blocks out to the open ocean below the waterline, and the
+        // whole flank answers to this one biome. Without water spawners the island is
+        // ringed with dead water, so the beach has to carry the surface ocean's sea life.
+        String beach = load("island_beach");
+        assertTrue(beach.contains("minecraft:squid") && beach.contains("minecraft:dolphin"),
+                "island beach lost the sea life of its submerged flank");
+        assertTrue(beach.contains("minecraft:cod"), "island beach lost its fish");
+    }
+
     private String load(String biome) {
         String path = "data/aquanaut/worldgen/biome/" + biome + ".json";
         try (InputStream stream = IslandBiomeResourcesTest.class.getClassLoader().getResourceAsStream(path)) {

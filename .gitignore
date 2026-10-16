@@ -51,4 +51,9 @@ scripts/blockbench/src/
 
 ## Python $$
 **/__pycache__/*
-/.mimosa
+
+### Tool scratch ###
+# Unanchored on purpose: the agent hook dirs land beside the source they watch,
+# e.g. src/main/java/.mimosa/ - a root-anchored pattern never matched them.
+.mimosa/
+/.zcode/

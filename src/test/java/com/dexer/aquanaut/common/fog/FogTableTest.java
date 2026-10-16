@@ -145,6 +145,17 @@ public final class FogTableTest {
                 "the mirror gorge is the clear one and the jungle the murky one");
     }
 
+    @Test
+    void theIslandBeachReadsAsSeaUnderWater() throws IOException {
+        // island_beach also owns the island's submerged flank, and a fog profile is only
+        // ever read with the camera under water. While it advertised the land profile
+        // (cast 0, and 256 clamped to the 192 ceiling) the flank opened a clear bubble in
+        // the middle of the sea. It has to match what the deep_ocean around it resolves to.
+        FogTable table = loadedTable();
+        assertEquals(table.fallback(), table.visibility(id("island_beach")),
+                "the island's flank would read as land under water instead of as sea");
+    }
+
     private static FogTable loadedTable() throws IOException {
         JsonObject json = JsonParser.parseString(Files.readString(PROFILE, StandardCharsets.UTF_8))
                 .getAsJsonObject();

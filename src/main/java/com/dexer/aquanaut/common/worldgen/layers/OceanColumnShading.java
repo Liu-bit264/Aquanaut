@@ -1,6 +1,8 @@
 package com.dexer.aquanaut.common.worldgen.layers;
 
 import com.dexer.aquanaut.common.worldgen.VolcanicTerrain;
+import com.dexer.aquanaut.common.worldgen.blend.SpawnIslandCaves;
+import com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask;
 import com.dexer.aquanaut.core.BlockRegistry;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
@@ -21,6 +23,12 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class OceanColumnShading {
     private static final BlockState WATER = Blocks.WATER.defaultBlockState();
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+    /**
+     * How deep the island's surface dressing is allowed to reach: at this depth the rocky
+     * shore and the grass plateau both give way to the same regional lithology, so the
+     * branch that tells them apart is only worth evaluating down to here.
+     */
+    private static final int ISLAND_SURFACE_DRESSING_DEPTH = 4;
 
     private OceanColumnShading() {
     }
@@ -108,7 +116,7 @@ public final class OceanColumnShading {
      * ({@code mask < 1}) are a vanilla sand shore: sand over sandstone, dug open exactly
      * like a vanilla beach island — no mod blocks on any surface the player walks on.
      * Below the surface, seeded cave voids open inside the solid seamount — strictly
-     * dry by construction (see {@link com.dexer.aquanaut.common.worldgen.blend.SpawnIslandCaves}).
+     * dry by construction (see {@link SpawnIslandCaves}).
      */
     private static BlockState islandStateFor(OceanColumnPlanner.ColumnPlan plan, int blockY) {
         int floorY = plan.cavityFloorY();
@@ -116,23 +124,30 @@ public final class OceanColumnShading {
             return WATER;
         }
         if (plan.islandMask() >= 1.0D
-                && blockY <= floorY - com.dexer.aquanaut.common.worldgen.blend.SpawnIslandCaves.SURFACE_PROTECT_MARGIN
-                && com.dexer.aquanaut.common.worldgen.blend.SpawnIslandCaves.isCave(
+                && blockY <= floorY - SpawnIslandCaves.SURFACE_PROTECT_MARGIN
+                && SpawnIslandCaves.isCave(
                         plan.islandSeed(), plan.blockX(), blockY, plan.blockZ())) {
             return AIR;
         }
         int depth = floorY - blockY;
         if (plan.islandMask() >= 1.0D) {
-            // The stony-shore region: bare rock with exposed low-tier ore veins and small
-            // lava ponds; the vanilla surface rule (stony_shore branch) lays the gravel.
-            if (com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask.stoneShoreWeight(
-                    plan.islandSeed(), plan.blockX(), plan.blockZ()) >= 0.5D) {
-                if (com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask.lavaPoolAt(
-                        plan.islandSeed(), plan.blockX(), plan.blockZ()) && depth <= 1) {
+            // The two island faces agree below the top few blocks: rocky shore and grassland
+            // alike end on the regional lithology, and all that differs is how the surface
+            // itself is dressed. So the stony-shore weight — a noise field, and the dearest
+            // thing in this method — is only asked where it can still change the answer,
+            // rather than once per block of every plateau column.
+            if (depth <= ISLAND_SURFACE_DRESSING_DEPTH
+                    && SpawnIslandMask.stoneShoreWeight(
+                            plan.islandSeed(), plan.blockX(), plan.blockZ()) >= 0.5D) {
+                // The stony-shore region: bare rock with exposed low-tier ore veins and small
+                // lava ponds; the vanilla surface rule (stony_shore branch) lays the gravel.
+                if (depth <= 1
+                        && SpawnIslandMask.lavaPoolAt(
+                                plan.islandSeed(), plan.blockX(), plan.blockZ())) {
                     return Blocks.LAVA.defaultBlockState();
                 }
                 if (depth == 0) {
-                    double ore = com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask.oreSpeckleAt(
+                    double ore = SpawnIslandMask.oreSpeckleAt(
                             plan.islandSeed(), plan.blockX(), plan.blockZ());
                     if (ore > 0.62D) {
                         return Blocks.COAL_ORE.defaultBlockState();
@@ -154,13 +169,13 @@ public final class OceanColumnShading {
             // here; seeded vanilla-sand patches speckle the grass so the ground is not a
             // perfect disc.
             if (depth == 0) {
-                if (com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask.pondBasinAt(
+                if (SpawnIslandMask.pondBasinAt(
                         plan.islandSeed(), plan.blockX(), plan.blockZ()) > 0.0D
-                        || com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask.sandPatchAt(
+                        || SpawnIslandMask.sandPatchAt(
                                 plan.islandSeed(), plan.blockX(), plan.blockZ())) {
                     return Blocks.SAND.defaultBlockState();
                 }
-                if (com.dexer.aquanaut.common.worldgen.blend.SpawnIslandMask.cragStoneAt(
+                if (SpawnIslandMask.cragStoneAt(
                         plan.islandSeed(), plan.blockX(), plan.blockZ())) {
                     return Blocks.STONE.defaultBlockState();
                 }

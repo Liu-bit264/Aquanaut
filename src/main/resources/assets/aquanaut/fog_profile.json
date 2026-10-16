@@ -52,22 +52,25 @@
       "cast": 0.72
     },
     "aquanaut:island_plains": {
-      "__comment": "The spawn island's open air: no medium, the eye reaches like vanilla plains.",
+      "__comment": "A land biome, so these values are only ever read with the camera under water - which on the plateau means the pond. The eye reaches like vanilla plains, so the pond stays clear.",
       "near": -4.0,
       "far": 256.0,
       "cast": 0.0
     },
     "aquanaut:island_hills": {
+      "__comment": "Land: see island_plains. The hills hold no water of note.",
       "near": -4.0,
       "far": 256.0,
       "cast": 0.0
     },
     "aquanaut:island_beach": {
+      "__comment": "Unlike its three neighbours this biome is mostly under water: the mod's sand apron runs some 170 blocks out to the open ocean below the waterline, and the renderer reads these values whenever the camera is submerged. So they have to read as sea, not as land - and they mirror the fallback, which is what the deep_ocean around the island resolves to, so the flank blends into the open ocean instead of opening a clear bubble in it.",
       "near": -4.0,
-      "far": 256.0,
-      "cast": 0.0
+      "far": 96.0,
+      "cast": 0.45
     },
     "aquanaut:island_stony_shore": {
+      "__comment": "Land: see island_plains. The quarry's pools are lava, which is not this table's medium.",
       "near": -4.0,
       "far": 256.0,
       "cast": 0.0

@@ -1,16 +1,14 @@
 package com.dexer.aquanaut.common.worldgen;
 
 import com.dexer.aquanaut.Aquanaut;
+import com.dexer.aquanaut.core.WorldPresetRegistry;
 import com.dexer.aquanaut.mixin.NoiseBasedChunkGeneratorAccessor;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.PlayerRespawnLogic;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -32,9 +30,6 @@ import net.neoforged.neoforge.event.level.LevelEvent;
  */
 @EventBusSubscriber(modid = Aquanaut.MODID)
 public final class SpawnIslandPlacement {
-    private static final ResourceLocation WATER_WORLD_SETTINGS =
-            ResourceLocation.fromNamespaceAndPath("aquanaut", "water_world");
-
     private SpawnIslandPlacement() {
     }
 
@@ -55,11 +50,8 @@ public final class SpawnIslandPlacement {
 
     private static boolean isWaterWorld(ServerLevel level) {
         if (level.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator generator) {
-            Holder<NoiseGeneratorSettings> settings =
-                    ((NoiseBasedChunkGeneratorAccessor) generator).aquanaut$getSettings();
-            return settings.unwrapKey()
-                    .map(key -> key.location().equals(WATER_WORLD_SETTINGS))
-                    .orElse(false);
+            return WorldPresetRegistry.isWaterWorld(
+                    ((NoiseBasedChunkGeneratorAccessor) generator).aquanaut$getSettings());
         }
         return false;
     }

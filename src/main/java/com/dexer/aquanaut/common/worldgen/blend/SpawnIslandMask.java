@@ -136,10 +136,13 @@ public final class SpawnIslandMask {
     private static final double BAY_QUARRY_CLEARANCE_DEG = 60.0D;
     /**
      * Draw budget for the bay layout. A draw must clear three rules at once (separation,
-     * even-grid deviation, quarry clearance), so clean passes are a minority; the budget
-     * covers the tail comfortably and, with the per-seed cache, costs nothing at runtime.
+     * even-grid deviation, quarry clearance), so clean passes are a minority and a seed
+     * whose first 64 draws all miss keeps the best of them. Landing on a passing draw is
+     * monotone in the budget — the draws are pure and a pass still breaks immediately — so
+     * a larger budget can only improve the layouts that were falling short, never spoil one
+     * that already passed. With the per-seed cache it costs nothing at runtime.
      */
-    private static final int BAY_ANGLE_ATTEMPTS = 64;
+    private static final int BAY_ANGLE_ATTEMPTS = 192;
     /** Salt of the seeded plateau/flat-core/beach modulation fields. */
     private static final long FLAT_EDGE_SALT = 0x7A31L;
     private static final long DUNE_SEED_SALT = 0xD0A7L;
@@ -466,13 +469,30 @@ public final class SpawnIslandMask {
         return field;
     }
 
+    /** Single-entry memo of {@link #bayProfiles}: the seed is constant for a whole world. */
+    private static long bayProfileCacheSeed;
+    private static double[][] bayProfileCache;
+
     /**
      * Per-bay profile of every sea bay, in bay order: {@code [target depth, half angle
      * (radians), wall shape exponent]}. The draws are independent per bay and seed, so one
      * island gets a broad lagoon beside a narrow fjord notch, each with its own wall
-     * steepness. Package-private for the width/shape variety test.
+     * steepness. Memoized per seed because {@link #applyBays} reaches this from the per-block
+     * mask evaluation, where an array per block is pure garbage; do not mutate the result.
+     * Package-private for the width/shape variety test.
      */
     static double[][] bayProfiles(long islandSeed) {
+        if (bayProfileCache != null && bayProfileCacheSeed == islandSeed) {
+            return bayProfileCache;
+        }
+        // Benign race: the computation is pure, threads may just redo it.
+        double[][] profiles = computeBayProfiles(islandSeed);
+        bayProfileCache = profiles;
+        bayProfileCacheSeed = islandSeed;
+        return profiles;
+    }
+
+    private static double[][] computeBayProfiles(long islandSeed) {
         long hash = scramble(islandSeed, BAY_SALT);
         double[][] profiles = new double[bayCenterAngles(islandSeed).length][3];
         for (int i = 0; i < profiles.length; i++) {
